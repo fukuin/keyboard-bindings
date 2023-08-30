@@ -9,7 +9,7 @@ use windows_hotkeys::keys::VKey;
 
 #[derive(Debug, Clone)]
 pub struct App {
-    pub keys_item: Vec<ListItem>,
+    pub keys_item: Vec<(ListItem, ListItem)>, //(本身,上一次保存的状态)
     pub combination: Vec<Combo>,
     pub enabled: bool,
 }
@@ -29,7 +29,7 @@ pub struct ListItem {
     pub output: Vec<ActionItem>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActionItem {
     Press(Key),
     Delay(u64),
@@ -42,6 +42,15 @@ impl Default for App {
             combination: vec![],
             enabled: false,
         }
+    }
+}
+
+impl PartialEq for ListItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+            && self.name == other.name
+            && self.input_key == other.input_key
+            && self.output.iter().eq(other.output.iter())
     }
 }
 
@@ -61,12 +70,20 @@ impl eframe::App for App {
                     .on_hover_cursor(egui::CursorIcon::PointingHand)
                     .clicked()
                 {
-                    self.keys_item.push(ListItem {
-                        id: nanoid!(),
-                        name: Default::default(),
-                        input_key: VKey::A,
-                        output: vec![],
-                    });
+                    self.keys_item.push((
+                        ListItem {
+                            id: nanoid!(),
+                            name: Default::default(),
+                            input_key: VKey::A,
+                            output: vec![],
+                        },
+                        ListItem {
+                            id: nanoid!(),
+                            name: Default::default(),
+                            input_key: VKey::A,
+                            output: vec![],
+                        },
+                    ));
                 }
                 if ui
                     .button("清空")
@@ -90,7 +107,7 @@ impl eframe::App for App {
                             ui.horizontal(|ui| {
                                 ui.label(index.to_string() + ":");
                                 ui.add(
-                                    egui::TextEdit::singleline(&mut self.keys_item[index].name)
+                                    egui::TextEdit::singleline(&mut self.keys_item[index].0.name)
                                         .desired_width(60.0)
                                         .hint_text("组名"),
                                 );
@@ -98,7 +115,7 @@ impl eframe::App for App {
                                 select_table_vkey(
                                     ui,
                                     index.to_string(),
-                                    &mut self.keys_item[index].input_key,
+                                    &mut self.keys_item[index].0.input_key,
                                 );
 
                                 if ui
@@ -107,6 +124,7 @@ impl eframe::App for App {
                                     .clicked()
                                 {
                                     self.keys_item[index]
+                                        .0
                                         .output
                                         .push(ActionItem::Press(Key::KeyA)); //默认值
                                 };
@@ -115,11 +133,12 @@ impl eframe::App for App {
                                     .on_hover_cursor(egui::CursorIcon::PointingHand)
                                     .clicked()
                                 {
-                                    self.keys_item[index].output.push(ActionItem::Delay(0));
+                                    self.keys_item[index].0.output.push(ActionItem::Delay(0));
                                 };
                                 let mut del_delay_index = 0;
                                 let mut can_del = false;
-                                for (i, o) in self.keys_item[index].output.iter_mut().enumerate() {
+                                for (i, o) in self.keys_item[index].0.output.iter_mut().enumerate()
+                                {
                                     match o {
                                         ActionItem::Press(k) => {
                                             select_table_key(ui, format!("{index}-{i}"), k)
@@ -157,23 +176,45 @@ impl eframe::App for App {
                                     }
                                 }
                                 if can_del {
-                                    self.keys_item[index].output.remove(del_delay_index);
+                                    self.keys_item[index].0.output.remove(del_delay_index);
                                     can_del = false;
                                 }
 
-                                if ui
-                                    .button("保存")
-                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
-                                    .clicked()
-                                {
-                                    let c = Combo {
-                                        input: self.keys_item[index].input_key,
-                                        output: self.keys_item[index].output.clone(),
-                                        id: item.id.to_string(),
-                                    };
-                                    self.combination.push(c);
-                                    self.enabled = true;
-                                };
+                                ui.add_enabled_ui(
+                                    !self.keys_item[index].0.eq(&self.keys_item[index].1),
+                                    |ui| {
+                                        if ui
+                                            .button("保存")
+                                            .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                            .clicked()
+                                        {
+                                            let c = Combo {
+                                                input: self.keys_item[index].0.input_key,
+                                                output: self.keys_item[index].0.output.clone(),
+                                                id: item.0.id.to_string(),
+                                            };
+                                            let mut has = 0;
+                                            if self.combination.len() == 0 {
+                                                has = 1;
+                                            } else {
+                                                for item in self.combination.iter_mut() {
+                                                    if item.id == c.id {
+                                                        *item = c.clone();
+                                                    } else {
+                                                        has = 1;
+                                                    }
+                                                }
+                                            }
+                                            if has == 1 {
+                                                self.combination.push(c);
+                                            }
+                                            self.keys_item[index].1 =
+                                                self.keys_item[index].0.clone();
+                                            self.enabled = true;
+                                        };
+                                    },
+                                );
+
                                 if ui
                                     .button("删除")
                                     .on_hover_cursor(egui::CursorIcon::PointingHand)
@@ -181,7 +222,7 @@ impl eframe::App for App {
                                 {
                                     self.keys_item.remove(index);
                                     is_break = true;
-                                    self.combination.retain(|i| i.id != *item.id);
+                                    self.combination.retain(|i| i.id != *item.0.id);
                                     if self.combination.len() == 0 {
                                         self.enabled = false;
                                     }
