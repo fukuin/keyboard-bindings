@@ -53,7 +53,7 @@ pub fn select_table_vkey(
     item: &mut VKey,
 ) -> InnerResponse<Option<()>> {
     egui::ComboBox::from_id_source(id)
-        .width(60.0)
+        .width(65.0)
         .selected_text(format!("{:?}", item))
         .show_ui(ui, |ui| {
             ui.selectable_value(item, VKey::A, "A");
@@ -114,12 +114,17 @@ pub fn select_table_vkey(
             ui.selectable_value(item, VKey::Numpad7, "Num7");
             ui.selectable_value(item, VKey::Numpad8, "Num8");
             ui.selectable_value(item, VKey::Numpad9, "Num9");
+            ui.selectable_value(item, VKey::Up, "Up");
+            ui.selectable_value(item, VKey::Down, "Down");
+            ui.selectable_value(item, VKey::Left, "Left");
+            ui.selectable_value(item, VKey::Right, "Right");
+            ui.selectable_value(item, VKey::Space, "Space");
         })
 }
 
 pub fn select_table_key(ui: &mut egui::Ui, id: String, item: &mut Key) -> Response {
     egui::ComboBox::from_id_source(id)
-        .width(60.0)
+        .width(65.0)
         .selected_text(format!("{:?}", item))
         .show_ui(ui, |ui| {
             ui.selectable_value(item, Key::KeyA, "A");
@@ -180,6 +185,11 @@ pub fn select_table_key(ui: &mut egui::Ui, id: String, item: &mut Key) -> Respon
             ui.selectable_value(item, Key::Num7, "Num7");
             ui.selectable_value(item, Key::Num8, "Num8");
             ui.selectable_value(item, Key::Num9, "Num9");
+            ui.selectable_value(item, Key::UpArrow, "Up");
+            ui.selectable_value(item, Key::DownArrow, "Down");
+            ui.selectable_value(item, Key::LeftArrow, "Left");
+            ui.selectable_value(item, Key::RightArrow, "Right");
+            ui.selectable_value(item, Key::Space, "Space");
         })
         .response
 }

@@ -111,7 +111,7 @@ impl eframe::App for App {
                                         .desired_width(60.0)
                                         .hint_text("组名"),
                                 );
-                                ui.label("添加监听按钮:");
+                                ui.label("监听按钮:");
                                 select_table_vkey(
                                     ui,
                                     index.to_string(),
