@@ -1,8 +1,11 @@
+use std::fmt::Debug;
+
 use crate::{
     components::{load_fonts, select_table_key, select_table_vkey, toggle_ui},
     listen_active, ALREADY_LISTEN, LISTEN,
 };
-use eframe::egui::{self};
+use eframe::egui;
+use egui_dnd::dnd;
 use nanoid::nanoid;
 use rdev::Key;
 use windows_hotkeys::keys::VKey;
@@ -29,7 +32,7 @@ pub struct ListItem {
     pub output: Vec<ActionItem>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ActionItem {
     Press(Key),
     Delay(u64),
@@ -51,6 +54,122 @@ impl PartialEq for ListItem {
             && self.name == other.name
             && self.input_key == other.input_key
             && self.output.iter().eq(other.output.iter())
+    }
+}
+
+impl ToString for ActionItem {
+    fn to_string(&self) -> String {
+        match self {
+            ActionItem::Press(key) => match key {
+                Key::Alt => String::from("Alt"),
+                Key::AltGr => String::from("AltGr"),
+                Key::Backspace => String::from("Backspace"),
+                Key::CapsLock => String::from("CapsLock"),
+                Key::ControlLeft => String::from("ControlLeft"),
+                Key::ControlRight => String::from("ControlRight"),
+                Key::Delete => String::from("Delete"),
+                Key::DownArrow => String::from("DownArrow"),
+                Key::End => String::from("End"),
+                Key::Escape => String::from("Escape"),
+                Key::F1 => String::from("F1"),
+                Key::F10 => String::from("F10"),
+                Key::F11 => String::from("F11"),
+                Key::F12 => String::from("F12"),
+                Key::F2 => String::from("F2"),
+                Key::F3 => String::from("F3"),
+                Key::F4 => String::from("F4"),
+                Key::F5 => String::from("F5"),
+                Key::F6 => String::from("F6"),
+                Key::F7 => String::from("F7"),
+                Key::F8 => String::from("F8"),
+                Key::F9 => String::from("F9"),
+                Key::Home => String::from("Home"),
+                Key::LeftArrow => String::from("LeftArrow"),
+                Key::MetaLeft => String::from("MetaLeft"),
+                Key::MetaRight => String::from("MetaRight"),
+                Key::PageDown => String::from("PageDown"),
+                Key::PageUp => String::from("PageUp"),
+                Key::Return => String::from("Return"),
+                Key::RightArrow => String::from("RightArrow"),
+                Key::ShiftLeft => String::from("ShiftLeft"),
+                Key::ShiftRight => String::from("ShiftRight"),
+                Key::Space => String::from("Space"),
+                Key::Tab => String::from("Tab"),
+                Key::UpArrow => String::from("UpArrow"),
+                Key::PrintScreen => String::from("PrintScreen"),
+                Key::ScrollLock => String::from("ScrollLock"),
+                Key::Pause => String::from("Pause"),
+                Key::NumLock => String::from("NumLock"),
+                Key::BackQuote => String::from("BackQuote"),
+                Key::Num1 => String::from("Num1"),
+                Key::Num2 => String::from("Num2"),
+                Key::Num3 => String::from("Num3"),
+                Key::Num4 => String::from("Num4"),
+                Key::Num5 => String::from("Num5"),
+                Key::Num6 => String::from("Num6"),
+                Key::Num7 => String::from("Num7"),
+                Key::Num8 => String::from("Num8"),
+                Key::Num9 => String::from("Num9"),
+                Key::Num0 => String::from("Num0"),
+                Key::Minus => String::from("Minus"),
+                Key::Equal => String::from("Equal"),
+                Key::KeyQ => String::from("KeyQ"),
+                Key::KeyW => String::from("KeyW"),
+                Key::KeyE => String::from("KeyE"),
+                Key::KeyR => String::from("KeyR"),
+                Key::KeyT => String::from("KeyT"),
+                Key::KeyY => String::from("KeyY"),
+                Key::KeyU => String::from("KeyU"),
+                Key::KeyI => String::from("KeyI"),
+                Key::KeyO => String::from("KeyO"),
+                Key::KeyP => String::from("KeyP"),
+                Key::LeftBracket => String::from("LeftBracket"),
+                Key::RightBracket => String::from("RightBracket"),
+                Key::KeyA => String::from("KeyA"),
+                Key::KeyS => String::from("KeyS"),
+                Key::KeyD => String::from("KeyD"),
+                Key::KeyF => String::from("KeyF"),
+                Key::KeyG => String::from("KeyG"),
+                Key::KeyH => String::from("KeyH"),
+                Key::KeyJ => String::from("KeyJ"),
+                Key::KeyK => String::from("KeyK"),
+                Key::KeyL => String::from("KeyL"),
+                Key::SemiColon => String::from("SemiColon"),
+                Key::Quote => String::from("Quote"),
+                Key::BackSlash => String::from("BackSlash"),
+                Key::IntlBackslash => String::from("IntlBackslash"),
+                Key::KeyZ => String::from("KeyZ"),
+                Key::KeyX => String::from("KeyX"),
+                Key::KeyC => String::from("KeyC"),
+                Key::KeyV => String::from("KeyV"),
+                Key::KeyB => String::from("KeyB"),
+                Key::KeyN => String::from("KeyN"),
+                Key::KeyM => String::from("KeyM"),
+                Key::Comma => String::from("Comma"),
+                Key::Dot => String::from("Dot"),
+                Key::Slash => String::from("Slash"),
+                Key::Insert => String::from("Insert"),
+                Key::KpReturn => String::from("KpReturn"),
+                Key::KpMinus => String::from("KpMinus"),
+                Key::KpPlus => String::from("KpPlus"),
+                Key::KpMultiply => String::from("KpMultiply"),
+                Key::KpDivide => String::from("KpDivide"),
+                Key::Kp0 => String::from("Kp0"),
+                Key::Kp1 => String::from("Kp1"),
+                Key::Kp2 => String::from("Kp2"),
+                Key::Kp3 => String::from("Kp3"),
+                Key::Kp4 => String::from("Kp4"),
+                Key::Kp5 => String::from("Kp5"),
+                Key::Kp6 => String::from("Kp6"),
+                Key::Kp7 => String::from("Kp7"),
+                Key::Kp8 => String::from("Kp8"),
+                Key::Kp9 => String::from("Kp9"),
+                Key::KpDelete => String::from("KpDelete"),
+                Key::Function => String::from("Function"),
+                Key::Unknown(key_code) => String::from(key_code.to_string()),
+            },
+            ActionItem::Delay(time) => time.to_string(),
+        }
     }
 }
 
@@ -98,12 +217,10 @@ impl eframe::App for App {
             ui.separator(); //分割线
             ui.add_enabled_ui(!unsafe { LISTEN }, |ui| {
                 let mut is_break = false; //是否break当前for循环
-                egui::Grid::new("list")
-                    .num_columns(2)
-                    .spacing([40.0, 4.0])
-                    .striped(true)
-                    .show(ui, |ui| {
-                        for (index, item) in self.keys_item.clone().iter_mut().enumerate() {
+                egui::Grid::new("list").striped(true).show(ui, |ui| {
+                    for (index, item) in self.keys_item.clone().iter_mut().enumerate() {
+                        // 每一组
+                        ui.vertical(|ui| {
                             ui.horizontal(|ui| {
                                 ui.label(index.to_string() + ":");
                                 ui.add(
@@ -228,12 +345,27 @@ impl eframe::App for App {
                                     }
                                 };
                             });
-                            ui.end_row();
-                            if is_break {
-                                break;
-                            }
+                            // 拖拽区域
+                            ui.horizontal(|ui| {
+                                dnd(ui, index).show_vec(
+                                    &mut self.keys_item[index].0.output,
+                                    |ui, item, handle, state| {
+                                        ui.horizontal_wrapped(|ui| {
+                                            handle.ui(ui, |ui| {
+                                                ui.label(item.to_string());
+                                            });
+                                        });
+                                    },
+                                );
+                            });
+                            ui.separator();
+                        });
+                        ui.end_row();
+                        if is_break {
+                            break;
                         }
-                    });
+                    }
+                });
             });
         });
         egui::SidePanel::right("Right")

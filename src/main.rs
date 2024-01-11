@@ -1,6 +1,5 @@
 pub mod components;
 pub mod ui;
-
 use crate::ui::ActionItem;
 use eframe::IconData;
 use once_cell::sync::Lazy;
@@ -21,8 +20,7 @@ fn main() -> Result<(), eframe::Error> {
         always_on_top: true,
         centered: true,
         icon_data: Some(
-            IconData::try_from_png_bytes(&include_bytes!("../logo/rustacean-flat-happy.png")[..])
-                .unwrap(),
+            IconData::try_from_png_bytes(&include_bytes!("../logo/99815816_p1.png")[..]).unwrap(),
         ),
         ..Default::default()
     };
