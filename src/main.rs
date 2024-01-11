@@ -20,7 +20,7 @@ fn main() -> Result<(), eframe::Error> {
         always_on_top: true,
         centered: true,
         icon_data: Some(
-            IconData::try_from_png_bytes(&include_bytes!("../logo/99815816_p1.png")[..]).unwrap(),
+            IconData::try_from_png_bytes(&include_bytes!("../logo/keyboard.png")[..]).unwrap(),
         ),
         ..Default::default()
     };

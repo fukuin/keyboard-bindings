@@ -1,0 +1,3 @@
+#define RT_MANIFEST 24
+1 RT_MANIFEST "Keyboard Bind.exe.manifest"
+iconName ICON "icon.ico"
