@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 pub mod components;
 pub mod ui;
 use crate::ui::ActionItem;

@@ -216,11 +216,14 @@ impl eframe::App for App {
             });
             ui.separator(); //分割线
             ui.add_enabled_ui(!unsafe { LISTEN }, |ui| {
-                let mut is_break = false; //是否break当前for循环
+                let mut is_delete = false;
+                let mut delede_id = String::new();
                 egui::Grid::new("list").striped(true).show(ui, |ui| {
+                    let mut deleted_index = 0;
                     for (index, item) in self.keys_item.clone().iter_mut().enumerate() {
                         // 每一组
                         ui.vertical(|ui| {
+                            // 操作区域
                             ui.horizontal(|ui| {
                                 ui.label(index.to_string() + ":");
                                 ui.add(
@@ -337,32 +340,46 @@ impl eframe::App for App {
                                     .on_hover_cursor(egui::CursorIcon::PointingHand)
                                     .clicked()
                                 {
-                                    self.keys_item.remove(index);
-                                    is_break = true;
-                                    self.combination.retain(|i| i.id != *item.0.id);
-                                    if self.combination.len() == 0 {
-                                        self.enabled = false;
-                                    }
+                                    deleted_index = index;
+                                    delede_id = item.0.id.clone();
+                                    is_delete = true;
                                 };
                             });
                             // 拖拽区域
                             ui.horizontal(|ui| {
-                                dnd(ui, index).show_vec(
+                                dnd(ui, index).show_vec_sized(
                                     &mut self.keys_item[index].0.output,
-                                    |ui, item, handle, state| {
-                                        ui.horizontal_wrapped(|ui| {
-                                            handle.ui(ui, |ui| {
-                                                ui.label(item.to_string());
+                                    egui::Vec2 { x: 30.0, y: 10.0 },
+                                    |ui, item, handle, _state| {
+                                        egui::Frame::none()
+                                            .fill(egui::Color32::from_rgb(200, 200, 200))
+                                            .show(ui, |ui| {
+                                                handle.ui_sized(
+                                                    ui,
+                                                    egui::Vec2 { x: 30.0, y: 10.0 },
+                                                    |ui| {
+                                                        ui.centered_and_justified(|ui| {
+                                                            egui::Widget::ui(
+                                                                egui::Label::new(item.to_string()),
+                                                                ui,
+                                                            );
+                                                        });
+                                                    },
+                                                );
                                             });
-                                        });
                                     },
                                 );
                             });
                             ui.separator();
                         });
                         ui.end_row();
-                        if is_break {
-                            break;
+                    }
+                    if is_delete {
+                        self.keys_item.remove(deleted_index);
+                        is_delete = false;
+                        self.combination.retain(|i| i.id != delede_id);
+                        if self.combination.len() == 0 {
+                            self.enabled = false;
                         }
                     }
                 });
