@@ -18,7 +18,6 @@ pub static mut ALREADY_LISTEN: bool = false;
 
 fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
-        always_on_top: true,
         centered: true,
         icon_data: Some(
             IconData::try_from_png_bytes(&include_bytes!("../logo/keyboard.png")[..]).unwrap(),
