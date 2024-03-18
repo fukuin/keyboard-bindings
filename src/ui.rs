@@ -10,7 +10,7 @@ use nanoid::nanoid;
 use rdev::Key;
 use windows_hotkeys::keys::VKey;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct App {
     pub keys_item: Vec<(ListItem, ListItem)>, //(本身,上一次保存的状态)
     pub combination: Vec<Combo>,
@@ -36,16 +36,6 @@ pub struct ListItem {
 pub enum ActionItem {
     Press(Key),
     Delay(u64),
-}
-
-impl Default for App {
-    fn default() -> Self {
-        Self {
-            keys_item: vec![],
-            combination: vec![],
-            enabled: false,
-        }
-    }
 }
 
 impl PartialEq for ListItem {
@@ -166,7 +156,7 @@ impl ToString for ActionItem {
                 Key::Kp9 => String::from("Kp9"),
                 Key::KpDelete => String::from("KpDelete"),
                 Key::Function => String::from("Function"),
-                Key::Unknown(key_code) => String::from(key_code.to_string()),
+                Key::Unknown(key_code) => key_code.to_string(),
             },
             ActionItem::Delay(time) => time.to_string(),
         }
@@ -177,11 +167,7 @@ impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         load_fonts(ctx);
         egui::CentralPanel::default().show(ctx, |ui| {
-            if self.keys_item.len() == 0 {
-                self.enabled = false;
-            } else {
-                self.enabled = true;
-            }
+            self.enabled = !self.keys_item.is_empty();
             ui.horizontal_top(|ui| {
                 ui.label("按键绑定");
                 if ui
@@ -314,7 +300,7 @@ impl eframe::App for App {
                                                 id: item.0.id.to_string(),
                                             };
                                             let mut has = 0;
-                                            if self.combination.len() == 0 {
+                                            if self.combination.is_empty() {
                                                 has = 1;
                                             } else {
                                                 for item in self.combination.iter_mut() {
@@ -378,7 +364,7 @@ impl eframe::App for App {
                         self.keys_item.remove(deleted_index);
                         is_delete = false;
                         self.combination.retain(|i| i.id != delede_id);
-                        if self.combination.len() == 0 {
+                        if self.combination.is_empty() {
                             self.enabled = false;
                         }
                     }

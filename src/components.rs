@@ -197,7 +197,7 @@ pub fn select_table_key(ui: &mut egui::Ui, id: String, item: &mut Key) -> Respon
 //加载中文
 pub fn load_fonts(ctx: &egui::Context) {
     let sys = SystemSource::new();
-    let font_name = format!("SimHei");
+    let font_name = "SimHei".to_string();
     let font = sys.select_family_by_name(&font_name).unwrap().fonts()[0]
         .load()
         .unwrap()
