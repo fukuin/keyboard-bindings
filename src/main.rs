@@ -1,8 +1,8 @@
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 pub mod components;
+pub mod record;
 pub mod ui;
 use crate::ui::ActionItem;
-use eframe::IconData;
 use once_cell::sync::Lazy;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use rdev::{simulate, EventType, Key};
@@ -17,15 +17,21 @@ pub static mut LISTEN: bool = false; //是否监听键盘事件的全局变量
 pub static mut ALREADY_LISTEN: bool = false;
 
 fn main() -> Result<(), eframe::Error> {
+    let image = image::load_from_memory(include_bytes!("../logo/keyboard.png")).unwrap();
     let options = eframe::NativeOptions {
         centered: true,
-        icon_data: Some(
-            IconData::try_from_png_bytes(&include_bytes!("../logo/keyboard.png")[..]).unwrap(),
-        ),
+        viewport: egui::ViewportBuilder {
+            icon: Some(Arc::new(egui::IconData {
+                width: image.width(),
+                height: image.height(),
+                rgba: image.into_rgba8().into_raw(),
+            })),
+            ..Default::default()
+        },
         ..Default::default()
     };
     eframe::run_native(
-        "Keyboard Bind",
+        "Keyboard Binding",
         options,
         Box::new(|_cc| Box::<ui::App>::default()),
     )

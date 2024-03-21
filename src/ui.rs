@@ -2,7 +2,9 @@ use std::fmt::Debug;
 
 use crate::{
     components::{load_fonts, select_table_key, select_table_vkey, toggle_ui},
-    listen_active, ALREADY_LISTEN, LISTEN,
+    listen_active,
+    record::record_ui,
+    ALREADY_LISTEN, LISTEN,
 };
 use eframe::egui;
 use egui_dnd::dnd;
@@ -402,5 +404,6 @@ impl eframe::App for App {
                     unsafe { ALREADY_LISTEN = true };
                 }
             });
+        record_ui(ctx);
     }
 }
