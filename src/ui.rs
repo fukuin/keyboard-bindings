@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{any::Any, fmt::Debug};
 
 use crate::{
     components::{load_fonts, select_table_key, select_table_vkey, toggle_ui},
@@ -31,7 +31,7 @@ pub struct ListItem {
     pub id: String,
     pub name: String,
     pub input_key: VKey,
-    pub output: Vec<ActionItem>,
+    pub output: Vec<(ActionItem, String)>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -234,21 +234,25 @@ impl eframe::App for App {
                                     self.keys_item[index]
                                         .0
                                         .output
-                                        .push(ActionItem::Press(Key::KeyA)); //默认值
+                                        .push((ActionItem::Press(Key::KeyA), nanoid!()));
+                                    //默认值
                                 };
                                 if ui
                                     .button("添加延时(ms)")
                                     .on_hover_cursor(egui::CursorIcon::PointingHand)
                                     .clicked()
                                 {
-                                    self.keys_item[index].0.output.push(ActionItem::Delay(0));
+                                    self.keys_item[index]
+                                        .0
+                                        .output
+                                        .push((ActionItem::Delay(0), nanoid!()));
                                 };
                                 let mut del_delay_index = 0;
                                 let mut can_del = false;
                                 for (i, o) in self.keys_item[index].0.output.iter_mut().enumerate()
                                 {
-                                    match o {
-                                        ActionItem::Press(k) => {
+                                    match o.0 {
+                                        ActionItem::Press(ref mut k) => {
                                             select_table_key(ui, format!("{index}-{i}"), k)
                                                 .context_menu(|ui| {
                                                     if ui
@@ -298,7 +302,12 @@ impl eframe::App for App {
                                         {
                                             let c = Combo {
                                                 input: self.keys_item[index].0.input_key,
-                                                output: self.keys_item[index].0.output.clone(),
+                                                output: self.keys_item[index]
+                                                    .0
+                                                    .output
+                                                    .iter()
+                                                    .map(|i| i.0)
+                                                    .collect(),
                                                 id: item.0.id.to_string(),
                                             };
                                             let mut has = 0;
@@ -342,18 +351,21 @@ impl eframe::App for App {
                                         egui::Frame::none()
                                             .fill(egui::Color32::from_rgb(200, 200, 200))
                                             .show(ui, |ui| {
-                                                handle.ui_sized(
+                                                let mut block = handle.ui_sized(
                                                     ui,
                                                     egui::Vec2 { x: 30.0, y: 10.0 },
                                                     |ui| {
                                                         ui.centered_and_justified(|ui| {
                                                             egui::Widget::ui(
-                                                                egui::Label::new(item.to_string()),
+                                                                egui::Label::new(
+                                                                    item.0.to_string(),
+                                                                ),
                                                                 ui,
                                                             );
                                                         });
                                                     },
                                                 );
+                                                block.id = egui::Id::new(item.1.clone());
                                             });
                                     },
                                 );
