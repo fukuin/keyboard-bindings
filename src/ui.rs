@@ -1,4 +1,4 @@
-use std::{any::Any, fmt::Debug};
+use std::fmt::Debug;
 
 use crate::{
     components::{load_fonts, select_table_key, select_table_vkey, toggle_ui},
@@ -171,7 +171,7 @@ impl eframe::App for App {
         egui::CentralPanel::default().show(ctx, |ui| {
             self.enabled = !self.keys_item.is_empty();
             ui.horizontal_top(|ui| {
-                ui.label("按键绑定");
+                ui.add(egui::Label::new("按键绑定").selectable(false));
                 if ui
                     .button("添加")
                     .on_hover_cursor(egui::CursorIcon::PointingHand)
@@ -203,185 +203,190 @@ impl eframe::App for App {
                 }
             });
             ui.separator(); //分割线
-            ui.add_enabled_ui(!unsafe { LISTEN }, |ui| {
-                let mut is_delete = false;
-                let mut delede_id = String::new();
-                egui::Grid::new("list").striped(true).show(ui, |ui| {
-                    let mut deleted_index = 0;
-                    for (index, item) in self.keys_item.clone().iter_mut().enumerate() {
-                        // 每一组
-                        ui.vertical(|ui| {
-                            // 操作区域
-                            ui.horizontal(|ui| {
-                                ui.label(index.to_string() + ":");
-                                ui.add(
-                                    egui::TextEdit::singleline(&mut self.keys_item[index].0.name)
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.add_enabled_ui(!unsafe { LISTEN }, |ui| {
+                    let mut is_delete = false;
+                    let mut delede_id = String::new();
+                    egui::Grid::new("list").striped(true).show(ui, |ui| {
+                        let mut deleted_index = 0;
+                        for (index, item) in self.keys_item.clone().iter_mut().enumerate() {
+                            // 每一组
+                            ui.vertical(|ui| {
+                                // 操作区域
+                                ui.horizontal(|ui| {
+                                    ui.label(index.to_string() + ":");
+                                    ui.add(
+                                        egui::TextEdit::singleline(
+                                            &mut self.keys_item[index].0.name,
+                                        )
                                         .desired_width(60.0)
                                         .hint_text("组名"),
-                                );
-                                ui.label("监听按钮:");
-                                select_table_vkey(
-                                    ui,
-                                    index.to_string(),
-                                    &mut self.keys_item[index].0.input_key,
-                                );
+                                    );
+                                    ui.label("监听按钮:");
+                                    select_table_vkey(
+                                        ui,
+                                        index.to_string(),
+                                        &mut self.keys_item[index].0.input_key,
+                                    );
 
-                                if ui
-                                    .button("添加执行按钮")
-                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
-                                    .clicked()
-                                {
-                                    self.keys_item[index]
-                                        .0
-                                        .output
-                                        .push((ActionItem::Press(Key::KeyA), nanoid!()));
-                                    //默认值
-                                };
-                                if ui
-                                    .button("添加延时(ms)")
-                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
-                                    .clicked()
-                                {
-                                    self.keys_item[index]
-                                        .0
-                                        .output
-                                        .push((ActionItem::Delay(0), nanoid!()));
-                                };
-                                let mut del_delay_index = 0;
-                                let mut can_del = false;
-                                for (i, o) in self.keys_item[index].0.output.iter_mut().enumerate()
-                                {
-                                    match o.0 {
-                                        ActionItem::Press(ref mut k) => {
-                                            select_table_key(ui, format!("{index}-{i}"), k)
-                                                .context_menu(|ui| {
-                                                    if ui
-                                                        .add(egui::Button::new("删除"))
-                                                        .on_hover_cursor(
-                                                            egui::CursorIcon::PointingHand,
-                                                        )
-                                                        .clicked()
-                                                    {
-                                                        del_delay_index = i;
-                                                        can_del = true;
-                                                        ui.close_menu();
-                                                    }
-                                                });
-                                        }
-                                        ActionItem::Delay(ref mut value) => {
-                                            ui.add(egui::DragValue::new(value)).context_menu(
-                                                |ui| {
-                                                    if ui
-                                                        .add(egui::Button::new("删除"))
-                                                        .on_hover_cursor(
-                                                            egui::CursorIcon::PointingHand,
-                                                        )
-                                                        .clicked()
-                                                    {
-                                                        del_delay_index = i;
-                                                        can_del = true;
-                                                        ui.close_menu();
-                                                    }
-                                                },
-                                            );
-                                        }
-                                    }
-                                }
-                                if can_del {
-                                    self.keys_item[index].0.output.remove(del_delay_index);
-                                    can_del = false;
-                                }
-
-                                ui.add_enabled_ui(
-                                    !self.keys_item[index].0.eq(&self.keys_item[index].1),
-                                    |ui| {
-                                        if ui
-                                            .button("保存")
-                                            .on_hover_cursor(egui::CursorIcon::PointingHand)
-                                            .clicked()
-                                        {
-                                            let c = Combo {
-                                                input: self.keys_item[index].0.input_key,
-                                                output: self.keys_item[index]
-                                                    .0
-                                                    .output
-                                                    .iter()
-                                                    .map(|i| i.0)
-                                                    .collect(),
-                                                id: item.0.id.to_string(),
-                                            };
-                                            let mut has = 0;
-                                            if self.combination.is_empty() {
-                                                has = 1;
-                                            } else {
-                                                for item in self.combination.iter_mut() {
-                                                    if item.id == c.id {
-                                                        *item = c.clone();
-                                                    } else {
-                                                        has = 1;
-                                                    }
-                                                }
+                                    if ui
+                                        .button("添加执行按钮")
+                                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                        .clicked()
+                                    {
+                                        self.keys_item[index]
+                                            .0
+                                            .output
+                                            .push((ActionItem::Press(Key::KeyA), nanoid!()));
+                                        //默认值
+                                    };
+                                    if ui
+                                        .button("添加延时(ms)")
+                                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                        .clicked()
+                                    {
+                                        self.keys_item[index]
+                                            .0
+                                            .output
+                                            .push((ActionItem::Delay(0), nanoid!()));
+                                    };
+                                    let mut del_delay_index = 0;
+                                    let mut can_del = false;
+                                    for (i, o) in
+                                        self.keys_item[index].0.output.iter_mut().enumerate()
+                                    {
+                                        match o.0 {
+                                            ActionItem::Press(ref mut k) => {
+                                                select_table_key(ui, format!("{index}-{i}"), k)
+                                                    .context_menu(|ui| {
+                                                        if ui
+                                                            .add(egui::Button::new("删除"))
+                                                            .on_hover_cursor(
+                                                                egui::CursorIcon::PointingHand,
+                                                            )
+                                                            .clicked()
+                                                        {
+                                                            del_delay_index = i;
+                                                            can_del = true;
+                                                            ui.close_menu();
+                                                        }
+                                                    });
                                             }
-                                            if has == 1 {
-                                                self.combination.push(c);
-                                            }
-                                            self.keys_item[index].1 =
-                                                self.keys_item[index].0.clone();
-                                            self.enabled = true;
-                                        };
-                                    },
-                                );
-
-                                if ui
-                                    .button("删除")
-                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
-                                    .clicked()
-                                {
-                                    deleted_index = index;
-                                    delede_id = item.0.id.clone();
-                                    is_delete = true;
-                                };
-                            });
-                            // 拖拽区域
-                            ui.horizontal(|ui| {
-                                dnd(ui, index).show_vec_sized(
-                                    &mut self.keys_item[index].0.output,
-                                    egui::Vec2 { x: 30.0, y: 10.0 },
-                                    |ui, item, handle, _state| {
-                                        egui::Frame::none()
-                                            .fill(egui::Color32::from_rgb(200, 200, 200))
-                                            .show(ui, |ui| {
-                                                let mut block = handle.ui_sized(
-                                                    ui,
-                                                    egui::Vec2 { x: 30.0, y: 10.0 },
+                                            ActionItem::Delay(ref mut value) => {
+                                                ui.add(egui::DragValue::new(value)).context_menu(
                                                     |ui| {
-                                                        ui.centered_and_justified(|ui| {
-                                                            egui::Widget::ui(
-                                                                egui::Label::new(
-                                                                    item.0.to_string(),
-                                                                ),
-                                                                ui,
-                                                            );
-                                                        });
+                                                        if ui
+                                                            .add(egui::Button::new("删除"))
+                                                            .on_hover_cursor(
+                                                                egui::CursorIcon::PointingHand,
+                                                            )
+                                                            .clicked()
+                                                        {
+                                                            del_delay_index = i;
+                                                            can_del = true;
+                                                            ui.close_menu();
+                                                        }
                                                     },
                                                 );
-                                                block.id = egui::Id::new(item.1.clone());
-                                            });
-                                    },
-                                );
+                                            }
+                                        }
+                                    }
+                                    if can_del {
+                                        self.keys_item[index].0.output.remove(del_delay_index);
+                                        can_del = false;
+                                    }
+
+                                    ui.add_enabled_ui(
+                                        !self.keys_item[index].0.eq(&self.keys_item[index].1),
+                                        |ui| {
+                                            if ui
+                                                .button("保存")
+                                                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                                .clicked()
+                                            {
+                                                let c = Combo {
+                                                    input: self.keys_item[index].0.input_key,
+                                                    output: self.keys_item[index]
+                                                        .0
+                                                        .output
+                                                        .iter()
+                                                        .map(|i| i.0)
+                                                        .collect(),
+                                                    id: item.0.id.to_string(),
+                                                };
+                                                let mut has = 0;
+                                                if self.combination.is_empty() {
+                                                    has = 1;
+                                                } else {
+                                                    for item in self.combination.iter_mut() {
+                                                        if item.id == c.id {
+                                                            *item = c.clone();
+                                                        } else {
+                                                            has = 1;
+                                                        }
+                                                    }
+                                                }
+                                                if has == 1 {
+                                                    self.combination.push(c);
+                                                }
+                                                self.keys_item[index].1 =
+                                                    self.keys_item[index].0.clone();
+                                                self.enabled = true;
+                                            };
+                                        },
+                                    );
+
+                                    if ui
+                                        .button("删除")
+                                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                        .clicked()
+                                    {
+                                        deleted_index = index;
+                                        delede_id = item.0.id.clone();
+                                        is_delete = true;
+                                    };
+                                });
+                                // 拖拽区域
+                                ui.horizontal(|ui| {
+                                    dnd(ui, index).show_vec_sized(
+                                        &mut self.keys_item[index].0.output,
+                                        egui::Vec2 { x: 30.0, y: 10.0 },
+                                        |ui, item, handle, _state| {
+                                            egui::Frame::none()
+                                                .fill(egui::Color32::from_rgb(200, 200, 200))
+                                                .show(ui, |ui| {
+                                                    let mut block = handle.ui_sized(
+                                                        ui,
+                                                        egui::Vec2 { x: 30.0, y: 10.0 },
+                                                        |ui| {
+                                                            ui.centered_and_justified(|ui| {
+                                                                egui::Widget::ui(
+                                                                    egui::Label::new(
+                                                                        item.0.to_string(),
+                                                                    ),
+                                                                    ui,
+                                                                );
+                                                            });
+                                                        },
+                                                    );
+                                                    block.id = egui::Id::new(item.1.clone());
+                                                });
+                                        },
+                                    );
+                                });
+                                ui.separator();
                             });
-                            ui.separator();
-                        });
-                        ui.end_row();
-                    }
-                    if is_delete {
-                        self.keys_item.remove(deleted_index);
-                        is_delete = false;
-                        self.combination.retain(|i| i.id != delede_id);
-                        if self.combination.is_empty() {
-                            self.enabled = false;
+                            ui.end_row();
                         }
-                    }
+                        if is_delete {
+                            self.keys_item.remove(deleted_index);
+                            is_delete = false;
+                            self.combination.retain(|i| i.id != delede_id);
+                            if self.combination.is_empty() {
+                                self.enabled = false;
+                            }
+                        }
+                    });
                 });
             });
         });
@@ -403,12 +408,14 @@ impl eframe::App for App {
                         } else {
                             "未添加按键组合时无法开启"
                         });
-
-                    ui.label(if unsafe { LISTEN } {
-                        "开启中"
-                    } else {
-                        "关闭中"
-                    });
+                    ui.add(
+                        egui::Label::new(if unsafe { LISTEN } {
+                            "开启中"
+                        } else {
+                            "关闭中"
+                        })
+                        .selectable(false),
+                    );
                 });
 
                 if unsafe { LISTEN } && !unsafe { ALREADY_LISTEN } {
